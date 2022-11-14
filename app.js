@@ -6,6 +6,11 @@ const mongoose = require('mongoose')
 // multer - парсер для извлечения файлов из body
 const multer = require('multer')
 
+// GraphQL
+const { graphqlHTTP } = require('express-graphql')
+const graphQlSchema = require('./graphql/schema')
+const graphQlResolver = require('./graphql/resolvers')
+
 const app = express()
 
 // Конфигурация хранилища для файлов для multer
@@ -58,6 +63,20 @@ app.use((req, res, next) => {
   next()
 })
 
+// Подлкючаем роут '/graphql' (роут может быть любой, но есть общая договоренность)
+// schema - схема
+// rootValue - резолверы
+// graphiql - активирует специальный инструмент для тестирования graphql
+// Этот инструмент доступен в браузере по адресу http://localhost:8080/graphql (справа есть документация)
+app.use(
+  '/graphql',
+  graphqlHTTP({
+    schema: graphQlSchema,
+    rootValue: graphQlResolver,
+    graphiql: true,
+  })
+)
+
 // Обработчик ошибок
 app.use((error, req, res, next) => {
   console.log('Error from app Error Handler: ', error)
@@ -73,7 +92,7 @@ app.use((error, req, res, next) => {
 })
 
 mongoose
-  .connect('mongodb+srv://testuser:testpassword@cluster0.qowv7.mongodb.net/blog?retryWrites=true&w=majority')
+  .connect('mongodb+srv://testuser:testpassword@cluster0.qowv7.mongodb.net/graphql-blog?retryWrites=true&w=majority')
   .then((result) => {
     app.listen(8080)
   })
