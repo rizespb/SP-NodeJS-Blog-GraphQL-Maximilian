@@ -6,9 +6,6 @@ const mongoose = require('mongoose')
 // multer - парсер для извлечения файлов из body
 const multer = require('multer')
 
-const feedRoutes = require('./routes/feed')
-const authRoutes = require('./routes/auth')
-
 const app = express()
 
 // Конфигурация хранилища для файлов для multer
@@ -61,9 +58,6 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use('/feed', feedRoutes)
-app.use('/auth', authRoutes)
-
 // Обработчик ошибок
 app.use((error, req, res, next) => {
   console.log('Error from app Error Handler: ', error)
@@ -81,15 +75,6 @@ app.use((error, req, res, next) => {
 mongoose
   .connect('mongodb+srv://testuser:testpassword@cluster0.qowv7.mongodb.net/blog?retryWrites=true&w=majority')
   .then((result) => {
-    const server = app.listen(8080)
-
-    // Инициализация webSocket-соединения
-    // Начиная с версии Socket.IO v3 надо прописывать CORS-ы и для webSocket-соединения
-    const io = require('./socket').init(server)
-
-    // Переданный вторым аргументом коллбэк будет выполнен для каждого входящего webSocket запроса
-    io.on('connection', (socket) => {
-      console.log('Client connected with web-sockets')
-    })
+    app.listen(8080)
   })
   .catch((err) => console.log('Error from app.js mongoose.connect: ', err))
