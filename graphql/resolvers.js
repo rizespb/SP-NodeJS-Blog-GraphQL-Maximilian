@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs')
 // Валидация данных
 const validator = require('validator')
 
+// JWT-token
+const jwt = require('jsonwebtoken')
+
 const User = require('../models/user')
 
 // В резолвере мы описываем все query и mutation, которые указали в схеме
@@ -25,7 +28,7 @@ module.exports = {
       error.data = errors
       error.code = 422
 
-      // Ошибка попадает в catch, а catch прокинет ее в обработчик ошибок next(err)
+      // Ошибкку обработает GraphQL в formatError в app.js
       throw error
     }
     //----------------------------------- //
@@ -34,6 +37,8 @@ module.exports = {
 
     if (existingUser) {
       const error = new Error('User exists already!')
+
+      // Ошибкку обработает GraphQL в formatError в app.js
       throw error
     }
 
@@ -54,5 +59,44 @@ module.exports = {
       ...createdUser._doc,
       _id: createdUser._id.toString(),
     }
+  },
+
+  login: async function ({ email, password }) {
+    const user = await User.findOne({ email: email })
+
+    if (!user) {
+      const error = new Error('User not found')
+      error.code = 401
+
+      // Ошибкку обработает GraphQL в formatError в app.js
+      throw error
+    }
+
+    // Сравнение хэшей паролей в запросе и в БД
+    const isEqual = await bcrypt.compare(password, user.password)
+
+    if (!isEqual) {
+      const error = new Error('Password is incorrect')
+      error.code = 401
+
+      // Ошибкку обработает GraphQL в formatError в app.js
+      throw error
+    }
+
+    // Генерируем jwt-token
+    // Кодируем в него ту информацию, которую считаем нужной (id, email)
+    // Делаем это с использованием соли - somesupersecretsecret
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email,
+      },
+      'somesupersecretsecret',
+      {
+        expiresIn: '1h',
+      }
+    )
+
+    return { token: token, userId: user._id.toString() }
   },
 }

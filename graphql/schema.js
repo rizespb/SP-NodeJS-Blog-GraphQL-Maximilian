@@ -3,6 +3,7 @@ const { buildSchema } = require('graphql')
 // Восклицательный знак для того String!, чтобы если вернем не String из запроса hello, то получим ошибку. ! делает возвращаемое значение обязательным
 // input - это специальное слово для описания "типа входных параметров" для резолвера
 // То есть, резолвер createUser примет параметры типа UserInputData и обязательно вернет объект User
+// AuthData - данные, возвращиемые при аутентификации
 module.exports = buildSchema(`
 	type Post {
 		_id: ID!
@@ -23,6 +24,11 @@ module.exports = buildSchema(`
 		posts: [Post!]!
 	}
 
+	type AuthData {
+		token: String!
+		userId: String!
+	}
+
 	input UserInputData {
 		email: String!
 		name: String!
@@ -30,7 +36,7 @@ module.exports = buildSchema(`
 	}
 
 	type RootQuery {
-		hello: String
+		login(email: String!, password: String!): AuthData!
 	}
 
 	type RootMutation {
