@@ -74,6 +74,20 @@ app.use(
     schema: graphQlSchema,
     rootValue: graphQlResolver,
     graphiql: true,
+    // formatError - метод для обработки ошибок (скорее, форматирование - придание ошибке нужного вида)
+    // сам объект err - ошибка GraphQL (например, неправильный синтаксис в запросе)
+    // err.originalError - ошибка, которую прокидываем мы или сторонняя библиотека
+    formatError(err) {
+      if (!err.originalError) {
+        return err
+      }
+
+      const data = err.originalError.data
+      const message = err.message || 'An error occured (formated with graphQL formatError method)'
+      const code = err.originalError.code || 500
+
+      return {message: message, status: code, data: data}
+    },
   })
 )
 
