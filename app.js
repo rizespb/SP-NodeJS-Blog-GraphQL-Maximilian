@@ -60,6 +60,13 @@ app.use((req, res, next) => {
   // Клиент может отсылать, помимо стандартных заголовков, еще заголовки 'Content-Type, Authorization'
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
+  // Это сделано для GraphQL:
+  // Когда полетит предаврительный запрос OPTIONS, GraphQL вернет на него ошибку, т.к. работает только с GET и POST запросами
+  // Поэтому при работе с GraphQL мы вручную возвращаем статус 200
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200)
+  }
+
   next()
 })
 
@@ -86,7 +93,7 @@ app.use(
       const message = err.message || 'An error occured (formated with graphQL formatError method)'
       const code = err.originalError.code || 500
 
-      return {message: message, status: code, data: data}
+      return { message: message, status: code, data: data }
     },
   })
 )
