@@ -11,6 +11,8 @@ const { graphqlHTTP } = require('express-graphql')
 const graphQlSchema = require('./graphql/schema')
 const graphQlResolver = require('./graphql/resolvers')
 
+const auth = require('./middleware/auth')
+
 const app = express()
 
 // Конфигурация хранилища для файлов для multer
@@ -69,6 +71,9 @@ app.use((req, res, next) => {
 
   next()
 })
+
+// Middleware для проверки jwt токена
+app.use(auth)
 
 // Подлкючаем роут '/graphql' (роут может быть любой, но есть общая договоренность)
 // schema - схема
