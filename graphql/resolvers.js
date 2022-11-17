@@ -166,7 +166,7 @@ module.exports = {
   },
 
   // Получение постов
-  posts: async function (args, req) {
+  posts: async function ({ page }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!')
       error.code = 401
@@ -175,10 +175,20 @@ module.exports = {
       throw error
     }
 
+    if (!page) {
+      page = 1
+    }
+
+    const perPage = 2
+
     const totalPosts = await Post.find().countDocuments()
     // Сортируем посты в порядке убывания
     // Затем поле creator, хранящее ID пользователя, наполняем данными об этом пользователе
-    const posts = await Post.find().sort({ createdAt: -1 }).populate('creator')
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * perPage)
+      .limit(perPage)
+      .populate('creator')
 
     return {
       posts: posts.map((post) => {

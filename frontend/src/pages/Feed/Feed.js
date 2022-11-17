@@ -57,7 +57,7 @@ class Feed extends Component {
     const graphqlQuery = {
       query: `
       {
-        posts {
+        posts(page: ${page}) {
           posts {
             _id
             title
@@ -205,6 +205,7 @@ class Feed extends Component {
             const postIndex = prevState.posts.findIndex((post) => post._id === prevState.editPost._id)
             updatedPosts[postIndex] = post
           } else {
+            updatedPosts.pop()
             updatedPosts.unshift(post)
           }
           return {
