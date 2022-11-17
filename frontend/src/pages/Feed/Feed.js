@@ -128,37 +128,52 @@ class Feed extends Component {
     formData.append('image', postData.image)
     console.log(postData.image)
 
-    let url = 'http://localhost:8080/feed/post'
-    let method = 'POST'
-
-    console.log(formData)
-    if (this.state.editPost) {
-      url = 'http://localhost:8080/feed/post/' + this.state.editPost._id
-      method = 'PUT'
+    let graphqlQuery = {
+      query: `
+      mutation {
+        createPost(postInput:{ title: "${postData.title}", content: "${postData.content}", imageUrl: "test-image-url"}) {
+            _id
+            title
+            content
+            imageUrl
+            creator {
+              name
+            }
+            createdAt
+          }
+      }
+      `,
     }
 
-    fetch(url, {
-      method: method,
-      body: formData,
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      body: JSON.stringify(graphqlQuery),
       headers: {
         // Использование Bearer - это договоренность. Не обязательно
         Authorization: 'Bearer ' + this.props.token,
+        'Content-type': 'application/json',
       },
     })
       .then((res) => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Creating or editing a post failed!')
-        }
-
         return res.json()
       })
       .then((resData) => {
+        if (resData.erorrs && resData.erorrs[0].status === 422) {
+          throw new Error('Validation failed in finishEditHandler')
+        }
+
+        if (resData.errors) {
+          throw new Error('Post creation failed at finishEditHandler')
+        }
+
+        console.log(resData)
+
         const post = {
-          _id: resData.post._id,
-          title: resData.post.title,
-          content: resData.post.content,
-          creator: resData.post.creator,
-          createdAt: resData.post.createdAt,
+          _id: resData.data.createPost._id,
+          title: resData.data.createPost.title,
+          content: resData.data.createPost.content,
+          creator: resData.data.createPost.creator,
+          createdAt: resData.data.createPost.createdAt,
         }
 
         this.setState((prevState) => {

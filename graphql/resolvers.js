@@ -156,6 +156,7 @@ module.exports = {
 
     // Добавляем пост в массив постов юзера
     user.posts.push(createdPost)
+    await user.save()
 
     // ...createdUser._doc - получить все данные из объекта пользователя createdUser без метаданных, добавляемых Mongoose
     return {
