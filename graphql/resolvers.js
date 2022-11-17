@@ -107,7 +107,6 @@ module.exports = {
   createPost: async function ({ postInput }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!')
-
       error.code = 401
 
       // Ошибкку обработает GraphQL в formatError в app.js
@@ -127,7 +126,6 @@ module.exports = {
 
     if (errors.length > 0) {
       const error = new Error('Invalid input')
-
       error.data = errors
       error.code = 422
 
@@ -164,6 +162,34 @@ module.exports = {
       _id: createdPost._id.toString(),
       createdAt: createdPost.createdAt.toISOString(),
       updatedAt: createdPost.updatedAt.toISOString(),
+    }
+  },
+
+  // Получение постов
+  posts: async function (args, req) {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!')
+      error.code = 401
+
+      // Ошибкку обработает GraphQL в formatError в app.js
+      throw error
+    }
+
+    const totalPosts = await Post.find().countDocuments()
+    // Сортируем посты в порядке убывания
+    // Затем поле creator, хранящее ID пользователя, наполняем данными об этом пользователе
+    const posts = await Post.find().sort({ createdAt: -1 }).populate('creator')
+
+    return {
+      posts: posts.map((post) => {
+        return {
+          ...post._doc,
+          _id: post._id.toString(),
+          createdAt: post.createdAt.toISOString(),
+          updatedAt: post.updatedAt.toISOString(),
+        }
+      }),
+      totalPosts: totalPosts,
     }
   },
 }
