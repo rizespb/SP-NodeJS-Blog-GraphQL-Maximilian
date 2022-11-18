@@ -62,6 +62,7 @@ class Feed extends Component {
             _id
             title
             content
+            imageUrl
             creator {
               name
             }
@@ -162,25 +163,42 @@ class Feed extends Component {
     })
       .then((res) => res.json())
       .then((fileResData) => {
-        const imageUrl = fileResData.filePath.replace('\\', '/')
-        console.log(imageUrl)
-        console.log(typeof imageUrl)
+        const imageUrl = fileResData.filePath && fileResData.filePath.replace('\\', '/')
 
         let graphqlQuery = {
           query: `
-          mutation {
-            createPost(postInput:{ title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
-                _id
-                title
-                content
-                imageUrl
-                creator {
-                  name
+            mutation {
+              createPost(postInput:{ title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
+                  _id
+                  title
+                  content
+                  imageUrl
+                  creator {
+                    name
+                  }
+                  createdAt
                 }
-                createdAt
-              }
-          }
+            }
           `,
+        }
+
+        if (this.state.editPost) {
+          graphqlQuery = {
+            query: `
+              mutation {
+                updatePost(id: "${this.state.editPost._id}", postInput:{ title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
+                    _id
+                    title
+                    content
+                    imageUrl
+                    creator {
+                      name
+                    }
+                    createdAt
+                  }
+              }
+            `,
+          }
         }
 
         return fetch('http://localhost:8080/graphql', {
@@ -207,13 +225,21 @@ class Feed extends Component {
 
         console.log(resData)
 
+        // В текущем методе мы и создаем пост, и редактируем его при необходимости
+        // В зависимости от метода GraphQL, который мы дергаем, ответ придет в поле createPost или updatePost
+        let resDataField = 'createPost'
+
+        if (this.state.editPost) {
+          resDataField = 'updatePost'
+        }
+
         const post = {
-          _id: resData.data.createPost._id,
-          title: resData.data.createPost.title,
-          content: resData.data.createPost.content,
-          creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt,
-          imagePath: resData.data.createPost.imageUrl,
+          _id: resData.data[resDataField]._id,
+          title: resData.data[resDataField].title,
+          content: resData.data[resDataField].content,
+          creator: resData.data[resDataField].creator,
+          createdAt: resData.data[resDataField].createdAt,
+          imagePath: resData.data[resDataField].imageUrl,
         }
 
         this.setState((prevState) => {
