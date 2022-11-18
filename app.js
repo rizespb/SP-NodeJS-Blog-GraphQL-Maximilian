@@ -88,7 +88,7 @@ app.put('/post-image', (req, res, next) => {
     })
   }
 
-  if (req.body.oldPath) {
+  if (req.body.oldPath !== 'undefined') {
     clearImage(req.body.oldPath)
   }
 
