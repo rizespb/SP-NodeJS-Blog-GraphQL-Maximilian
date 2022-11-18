@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs')
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -75,6 +76,25 @@ app.use((req, res, next) => {
 // Middleware для проверки jwt токена
 app.use(auth)
 
+// Endpoint для загрузки изображений
+app.put('/post-image', (req, res, next) => {
+  if (!req.isAuth) {
+    throw new Error('Not authenticated!')
+  }
+
+  if (!req.file) {
+    return res.status(200).json({
+      message: 'No file provided!',
+    })
+  }
+
+  if (req.body.oldPath) {
+    clearImage(req.body.oldPath)
+  }
+
+  return res.status(201).json({ message: 'File stored', filePath: req.file.path })
+})
+
 // Подлкючаем роут '/graphql' (роут может быть любой, но есть общая договоренность)
 // schema - схема
 // rootValue - резолверы
@@ -123,3 +143,11 @@ mongoose
     app.listen(8080)
   })
   .catch((err) => console.log('Error from app.js mongoose.connect: ', err))
+
+// Удаление страого изображения в случае загрузки нового изображения пр иобновлении поста
+const clearImage = (filePath) => {
+  filePath = path.join(__dirname, '..', filePath)
+  fs.unlink(filePath, (err) => {
+    console.log('Error from clearImage: ', err)
+  })
+}
