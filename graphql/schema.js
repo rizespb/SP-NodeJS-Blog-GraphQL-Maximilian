@@ -56,6 +56,7 @@ module.exports = buildSchema(`
 			createUser(userInput: UserInputData): User!
 			createPost(postInput: PostInputData): Post!
 			updatePost(id: ID!, postInput: PostInputData): Post!
+			deletePost(id: ID!): Boolean
 	}
 
 	schema {

@@ -1,5 +1,5 @@
 const path = require('path')
-const fs = require('fs')
+const { clearImage } = require('./util/file')
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -88,7 +88,7 @@ app.put('/post-image', (req, res, next) => {
     })
   }
 
-  if (req.body.oldPath !== 'undefined') {
+  if (req.body.oldPath !== undefined) {
     clearImage(req.body.oldPath)
   }
 
@@ -143,12 +143,3 @@ mongoose
     app.listen(8080)
   })
   .catch((err) => console.log('Error from app.js mongoose.connect: ', err))
-
-// Удаление страого изображения в случае загрузки нового изображения пр иобновлении поста
-const clearImage = (filePath) => {
-  filePath = path.join(__dirname, filePath)
-
-  fs.unlink(filePath, (err) => {
-    console.log('Error from clearImage: ', err)
-  })
-}

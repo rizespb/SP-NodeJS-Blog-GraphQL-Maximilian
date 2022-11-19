@@ -10,6 +10,8 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/user')
 const Post = require('../models/post')
 
+const { clearImage } = require('../util/file')
+
 // В резолвере мы описываем все query и mutation, которые указали в схеме
 module.exports = {
   // Регистрация
@@ -249,6 +251,7 @@ module.exports = {
       throw error
     }
 
+    // Проверяем, что пост редактирует создатель поста
     if (post.creator._id.toString() !== req.userId.toString()) {
       const error = new Error('Not authorized!')
       error.code = 403
@@ -291,5 +294,43 @@ module.exports = {
       createdAt: updatedPost.createdAt.toISOString(),
       updatedAt: updatedPost.updatedAt.toISOString(),
     }
+  },
+
+  // Удаление поста
+  deletePost: async function ({ id }, req) {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!')
+      error.code = 401
+
+      // Ошибкку обработает GraphQL в formatError в app.js
+      throw error
+    }
+
+    // Мы не используем populate('creator'), поэтому в creator хранится не объект, а просто ID из MongoDB
+    const post = await Post.findById(id)
+
+    if (!post) {
+      const error = new Error('No post found!')
+      error.code = 404
+
+      throw error
+    }
+
+    // Проверяем, что пост редактирует создатель поста
+    if (post.creator.toString() !== req.userId.toString()) {
+      const error = new Error('Not authorized!')
+      error.code = 403
+
+      throw error
+    }
+
+    clearImage(post.imageUrl)
+    await Post.findByIdAndRemove(id)
+
+    const user = await User.findById(req.userId)
+    user.posts.pull(id)
+    await user.save()
+
+    return true
   },
 }
