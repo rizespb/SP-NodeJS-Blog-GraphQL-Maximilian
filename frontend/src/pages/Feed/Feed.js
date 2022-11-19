@@ -127,14 +127,34 @@ class Feed extends Component {
 
   statusUpdateHandler = (event) => {
     event.preventDefault()
-    fetch('URL')
-      .then((res) => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Can't update status!")
+
+    const graphqlQuery = {
+      query: `
+        mutation {
+          updateStatus(status: "${this.state.status}") {
+            status
+          }
         }
+      `,
+    }
+
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        // Использование Bearer - это договоренность. Не обязательно
+        Authorization: 'Bearer ' + this.props.token,
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify(graphqlQuery),
+    })
+      .then((res) => {
         return res.json()
       })
       .then((resData) => {
+        if (resData.errors) {
+          throw new Error('Fetching post failed at loadPosts')
+        }
+
         console.log(resData)
       })
       .catch(this.catchError)
